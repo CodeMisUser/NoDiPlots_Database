@@ -50,7 +50,7 @@ def  readQ(sourcefile,Count):
     # returns the three important data types
     return[Time,Data,counter]
 
-def nodi_plot(Time,Data,Count,Command):
+def nodi_plot(Time,Data,Count,Plot_command, grid_size):
     #responsible for the creation of the nodi* plots
     # sets up the matrix for the magnitude calculation
     magnitude_i = np.zeros(Count)
@@ -84,25 +84,25 @@ def nodi_plot(Time,Data,Count,Command):
 
     # create 2D plot
     # sets up the plot labels
-    if Command == 'Q(i+1) and Q(i)':
+    if Plot_command == 'Q(i+1) and Q(i)':
         x = magnitude_i
         y = magnitude_i_1
         word = 'Magnitude'
         xlabel = r'$\Delta q_{{i}} \, \text{(C)}$'
         ylabel = r'$\Delta q_{{i+1}} \, \text{(C)}$'
-    elif Command == 'T(i+1) and T(i)':
+    elif Plot_command == 'T(i+1) and T(i)':
         x = time_i
         y = time_i_1
         word = 'Time'
         xlabel = r'$\Delta t_{{i}} \, \text{(s)}$'
         ylabel = r'$\Delta t_{{i+1}} \, \text{(s)}$'
-    elif Command == 'T(i) and Q(i)':
+    elif Plot_command == 'T(i) and Q(i)':
         x = magnitude_i
         y = time_i
         word = 'Time and Magnitude'
         xlabel = r'$\Delta q_{{i}} \, \text{(C)}$'
         ylabel = r'$\Delta t_{{i}} \, \text{(s)}$'
-    elif Command == 'Q(i)/T(i) and T(i)':
+    elif Plot_command == 'Q(i)/T(i) and T(i)':
         x = time_i
         y = magnitude_i / time_i
         word = 'Magnitude and Time'
@@ -112,7 +112,6 @@ def nodi_plot(Time,Data,Count,Command):
         msg = print('Command is wrong!')
         return 0
     # Create a 100x100 grid of equally spaced containers
-    grid_size = 100
     x_bins = np.linspace(min(x), max(x), grid_size)
     y_bins = np.linspace(min(y), max(y), grid_size)
 
@@ -180,6 +179,7 @@ def nodi_plot(Time,Data,Count,Command):
     cbar.set_label('Log Scaled Density')
 
     plt.show()
+    return H_scaled.T
 #endregion
 
 #command = '80000'
