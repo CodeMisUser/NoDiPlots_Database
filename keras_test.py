@@ -5,24 +5,19 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-class_names = ['Particle (positive)', 'Particle (Negative)', 'Protrusion (positive)', 'Protrusion (negative)']
+class_names = ['Particle', 'None']
 
-model = tf.keras.Sequential([
+model_Q = tf.keras.Sequential([
     tf.keras.layers.Flatten(input_shape=(25, 25)),
     tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dense(4)
+    tf.keras.layers.Dense(2)
 ])
 
 # Compile the model
-model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
+model_Q.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=['accuracy'])
 
 # Model summary
 model.summary()
 
 
-fashion_mnist = tf.keras.datasets.fashion_mnist
-
-(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
-
-print("shit")
 

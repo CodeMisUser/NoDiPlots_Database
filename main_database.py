@@ -32,10 +32,20 @@ def run_plotting():
             start = int(input_entry_start.get())  # Get user input as string
             end = int(input_entry_end.get())  # Get user input as string
             if (start < end) and (end < file_length):
-                Time_temp = [t for t in Time if start <= t <= end]
-                Data_temp = [m for t, m in zip(Time, Data) if start <= t <= end]
-                Count_temp = len(Time_temp)
+                Time_temp = np.array([t for t in Time if start <= t <= end])
+                Data_temp = np.array([m for t, m in zip(Time, Data) if start <= t <= end])
+
+        input_value_value_sign = dropdown_var_value_sign.get()  # Get user input as string
+        negative_indcies = []
+        if input_value_value_sign == 'Positive':
+            negative_indcies = np.where(Data_temp < 0)
+        elif input_value_value_sign == 'Negative':
+            negative_indcies = np.where(Data_temp > 0)
             
+        Data_temp = np.delete(Data_temp, negative_indcies)
+        Time_temp = np.delete(Time_temp, negative_indcies)
+        Count_temp = len(Time_temp)
+
         input_value_plot = dropdown_var_plot.get()  # Get user input as string
         input_grid_size = int(dropdown_var_grid_size.get())
 
@@ -84,17 +94,29 @@ checkbox_var_length = tk.BooleanVar()
 checkbox_length = tk.Checkbutton(input_frame, text="Whole File", variable=checkbox_var_length)
 checkbox_length.pack(side=tk.LEFT, padx=5)
 
+# Frame to hold the entry fields and tickbox in a row
+input_frame_2 = tk.Frame(root)
+input_frame_2.pack(pady=1)
+
 # plotting dropbdown
-dropdown_label = tk.Label(root, text="Select a plot option:")
+dropdown_label = tk.Label(input_frame_2, text="Select a plot option:")
 dropdown_label.pack(pady=5)
 
 # Input for user to enter a number
 dropdown_var_plot = tk.StringVar(root)
 dropdown_var_plot.set("Q(i+1) and Q(i)")  # Set default option
 
-options = ["Q(i+1) and Q(i)", "T(i+1) and T(i)", "T(i) and Q(i)", "Q(i)/T(i) and T(i)"]  # List of options
-dropdown_menu_plot = tk.OptionMenu(root, dropdown_var_plot, *options)
-dropdown_menu_plot.pack(pady=1)
+options = ["Q(i+1) and Q(i)", "T(i+1) and T(i)", "T(i) and Q(i)", "Q(i)/T(i) and T(i)","Timescale","Q Density","T Density"]  # List of options
+dropdown_menu_plot = tk.OptionMenu(input_frame_2, dropdown_var_plot, *options)
+dropdown_menu_plot.pack(side=tk.LEFT, pady=1)
+
+# Input for user to enter a number
+dropdown_var_value_sign = tk.StringVar(root)
+dropdown_var_value_sign.set("Both")  # Set default option
+
+options_2 = ["Positive", "Negative", "Both"]  # List of options
+dropdown_menu_value_sign = tk.OptionMenu(input_frame_2, dropdown_var_value_sign, *options_2)
+dropdown_menu_value_sign.pack(side=tk.LEFT, pady=1)
 
 # plotting dropbdown
 dropdown_label_grid_size = tk.Label(root, text="Select a grid size:")
