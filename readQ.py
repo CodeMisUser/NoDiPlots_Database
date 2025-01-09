@@ -8,6 +8,10 @@ from matplotlib.ticker import LogFormatter
 from matplotlib.colors import LogNorm
 import matplotlib.ticker as ticker
 
+import pandas as pd
+from datetime import datetime
+import re
+
 def setup_Qfile(sourcefile,command):
 
     # the value of command determines the length of the reading  
@@ -28,7 +32,7 @@ def  readQ(sourcefile,Count):
     if f == -1:
         msg = print('file #s could not be opened - check folder!')
         return [0,0,0]
-    counter=1
+    counter=0
     # reset Matrix to Null
     Time = np.zeros((Count))
     # reset Matrix to Null
@@ -50,6 +54,31 @@ def  readQ(sourcefile,Count):
     # returns the three important data types
     return[Time,Data,counter]
 
+def setup_csvfile(sourcefile,command):
+    # Read the semicolon-separated file into a DataFrame
+    data = pd.read_csv(sourcefile, delimiter=';', skiprows=1, header=None, names=["UTC_Time", "Value"])
+    values = data["Value"].astype(float)
+    Data = values.to_numpy(dtype='float64') 
+
+    # the value of command determines the length of the reading  
+    if not command.isdigit():
+        count = len(Data)
+    else:
+        count = int(command)
+    
+    Time = np.zeros((count))
+    counter = 0        
+    temp = data["UTC_Time"]
+    while (counter < count):
+        first_split = temp[counter].split(":")
+        second_split = first_split[0].split(" ")
+        seconds = re.sub(r'\.\.+', '.', str(first_split[2]))
+        Time[counter] = float(second_split[1])*3600 + float(first_split[1])*60 + float(seconds)
+        counter=counter+1
+
+    # Convert to arrays
+    return [Time,Data,count]
+
 def nodi_plot(Time,Data,Count,Plot_command, grid_size):
     #responsible for the creation of the nodi* plots
     # sets up the matrix for the magnitude calculation
@@ -59,21 +88,23 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size):
     time_i = np.zeros(Count)
     time_i_1 = np.zeros(Count)
     # sets up the counter for the calculation; set to 2 as calculation takes PD before and after into account
-    counter = 2
+    counter = 1
+    counter2 = 0
     # performs the calculation for each PD pulse
+
     while(counter < (Count-1)):
         # magnitude
-        magnitude_i[counter] = Data[counter] - Data[counter-1]
-        magnitude_i_1[counter] = Data[counter+1] - Data[counter]
+        magnitude_i[counter2] = Data[counter] - Data[counter-1]
+        magnitude_i_1[counter2] = Data[counter+1] - Data[counter]
         # time
-        time_i[counter] = Time[counter] - Time[counter-1]
-        time_i_1[counter] = Time[counter+1] - Time[counter]
-        # update counter
+        time_i[counter2] = Time[counter] - Time[counter-1]
+        time_i_1[counter2] = Time[counter+1] - Time[counter]        
         counter = counter + 1
+        counter2 = counter2 + 1
 
     # clean the lists
-    zero_indices_time = np.where(time_i == 0)
-    zero_indices_time_i = np.where(time_i_1 == 0)
+    zero_indices_time = np.where(time_i <= 0)
+    zero_indices_time_i = np.where(time_i_1 <= 0)
 
     # Remove entries from both lists at the zero indices
     magnitude_i = np.delete(magnitude_i, zero_indices_time)
@@ -152,9 +183,9 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
     # Scale the stack heights by the mean stack count per minute
     H_scaled = (H / mean_stack_count_per_min)
 
-    titlesize = 20
-    labelsize = 18
-    ticksize = 14
+    titlesize = 40
+    labelsize = 40
+    ticksize = 40
 
     # Plot the log-scaled density as a heatmap
     plt.imshow(H_scaled.T, origin='lower', aspect='auto', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],cmap='viridis',norm=LogNorm())
@@ -166,6 +197,10 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
     ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
     ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
     ax.tick_params(axis='both', labelsize=ticksize)
+    tx = ax.xaxis.get_offset_text()
+    tx.set_fontsize(ticksize)
+    ty = ax.yaxis.get_offset_text()
+    ty.set_fontsize(ticksize)
 
     # Add a colorbar with logarithmic scale
     cbar = plt.colorbar()
@@ -177,10 +212,18 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
     # Add labels and title
     plt.xlabel(xlabel, size = labelsize)
     plt.ylabel(ylabel, size = labelsize)
-    plt.title('Normalized ' + word + ' Differences Heatmap (PD Count: ' + str(Count) + ')', size = titlesize)
+    file_length = np.round((max(Time) - min(Time)),2)
+    plt.title('PD Count: ' + str(Count) + ' Length: ' + str(file_length) + ' s', size = titlesize)
+    mng = plt.get_current_fig_manager()
+    mng.window.state('zoomed')
+    plt.subplots_adjust(left=0.125, bottom=0.125, right=0.988, top=0.86, wspace=None, hspace=None)
     plt.show()
 
     # Create 3D plot
+
+    titlesize = 30
+    labelsize = 20
+    ticksize = 20
 
     # Create a meshgrid for the surface plot
     X, Y = np.meshgrid(xedges[:-1], yedges[:-1])
@@ -195,12 +238,15 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
     ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
     ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
     ax.tick_params(axis='both', labelsize=ticksize)
+    tx = ax.xaxis.get_offset_text()
+    tx.set_fontsize(ticksize)
+    ty = ax.yaxis.get_offset_text()
+    ty.set_fontsize(ticksize)
 
     # Set labels
     ax.set_xlabel(xlabel, size = labelsize)
     ax.set_ylabel(ylabel, size = labelsize)
-    ax.set_zlabel('Mean Stack Count Per Minute', size = labelsize)
-    ax.set_title('3D Heatmap of Normalized ' + word +' Differences (PD Count: ' + str(Count) + ')', size = titlesize)
+    #ax.set_title('3D Heatmap of Normalized ' + word +' Differences (PD Count: ' + str(Count) + ')', size = titlesize)
 
     # Create an axes for the colorbar
     cax = fig.add_axes([0.9, 0.1, 0.03, 0.8])  # [left, bottom, width, height]
@@ -213,15 +259,17 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
     cbar = plt.colorbar(mappable, cax=cax)
     cbar.set_label('Mean Stack Count Per Minute', size = labelsize)
     cbar.ax.tick_params(labelsize=ticksize)
-
+    mng = plt.get_current_fig_manager()
+    mng.window.state('zoomed')
     plt.show()
     return H_scaled.T
 
 def time_scale_plot(x,y,word,xlabel,ylabel):
     # plotting the timescale
-    titlesize = 20
-    labelsize = 18
-    ticksize = 14
+    titlesize = 40
+    labelsize = 40
+    ticksize = 40
+    x = x - min(x)
     plt.title(word,size = titlesize)
     plt.xlabel(xlabel, size = labelsize)
     plt.ylabel(ylabel, size = labelsize)    
@@ -232,8 +280,10 @@ def time_scale_plot(x,y,word,xlabel,ylabel):
     
     # Customizing tick parameters for a cleaner look
     plt.tick_params(axis='both', which='major', labelsize=ticksize)
+    plt.subplots_adjust(left=0.12, bottom=0.12, right=0.98, top=0.94, wspace=None, hspace=None)
 
-    plt.tight_layout()  # Adjust layout to prevent clipping
+    mng = plt.get_current_fig_manager()
+    mng.window.state('zoomed')
     plt.show()
     
     return [x, y]
@@ -249,9 +299,9 @@ def plot_density_distribution(data,word,xlabel,ylabel):
 
     #zero_indices = np.where(diffs == 0)
     #diffs = np.delete(diffs, zero_indices)
-    titlesize = 20
-    labelsize = 18
-    ticksize = 14
+    titlesize = 40
+    labelsize = 40
+    ticksize = 40
     # Create a density plot for time differences
     plt.hist(diffs, bins=1000, density=False, color='skyblue', edgecolor='black')
     plt.yscale('log')
@@ -260,9 +310,29 @@ def plot_density_distribution(data,word,xlabel,ylabel):
     plt.ylabel(ylabel, size = labelsize)
     plt.grid(visible=True, which='both', color='gray', linestyle='--', linewidth=0.5)
     plt.tick_params(axis='both', which='major', labelsize=ticksize)
-    plt.tight_layout()
+    plt.subplots_adjust(left=0.08, bottom=0.08, right=0.98, top=0.95, wspace=None, hspace=None)
+
+    mng = plt.get_current_fig_manager()
+    mng.window.state('zoomed')
+    plt.show()
+
+    zero_indices_diffs = np.where(diffs < 0)
+    diffs = np.delete(diffs, zero_indices_diffs)
+
+    plt.hist(diffs, bins=1000, density=False, color='skyblue', edgecolor='black')
+    plt.yscale('log')
+    plt.title(word, size=titlesize)
+    plt.xlabel(xlabel, size = labelsize)
+    plt.ylabel(ylabel, size = labelsize)
+    plt.grid(visible=True, which='both', color='gray', linestyle='--', linewidth=0.5)
+    plt.tick_params(axis='both', which='major', labelsize=ticksize)
+    plt.subplots_adjust(left=0.08, bottom=0.08, right=0.98, top=0.95, wspace=None, hspace=None)
+
+    mng = plt.get_current_fig_manager()
+    mng.window.state('zoomed')
     plt.show()
 
     return diffs
+
 
 

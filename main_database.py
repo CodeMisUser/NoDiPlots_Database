@@ -5,8 +5,10 @@ from tkinter import *
 import matplotlib.pyplot as plt
 from readQ import setup_Qfile
 from readQ import nodi_plot 
+from readQ import setup_csvfile 
 import numpy as np
-import pandas as pd 
+import pandas as pd
+from tkinter import font as tkFont
 
 # Function to select a file
 def select_file():
@@ -15,9 +17,15 @@ def select_file():
         file_label.config(text=file_path)  # Display file name in the label
         global selected_file, Time, Data, Count, file_length
         selected_file = file_path  # Store the selected file path
-        [Time,Data,Count] = setup_Qfile(selected_file,"end")
+        if file_path.endswith('.Q'):
+            [Time,Data,Count] = setup_Qfile(selected_file,"end")
+        elif file_path.endswith('.csv'):
+            [Time,Data,Count] = setup_csvfile(selected_file,"end")
+        else:
+            msg = print('file #s could not be opened - check folder!')
+            [Time,Data,Count] = [0,0,0]
         # insert code for displaying the file length
-        file_length = np.round(Time[-1],2)
+        file_length = np.round((max(Time) - min(Time)),2)
         file_label_length.config(text="File length: " + str(file_length) + " (s)")
 
 # Function to run plotting
@@ -60,14 +68,16 @@ def run_plotting():
 # Create the main window
 root = tk.Tk()
 root.title("NoDi* Plotter")
+font_size = 16
+button_size = tkFont.Font(family='Helvetica', size=12)
 
-root.geometry("600x400")
+root.geometry("800x400")
 
 # Label and button for file selection
 file_label = tk.Label(root, text="No file selected")
 file_label.pack(pady=10)
 
-file_button = tk.Button(root, text="Select File", command=select_file)
+file_button = tk.Button(root, text="Select File", command=select_file, font=(button_size))
 file_button.pack(pady=1)
 
 file_label_length = tk.Label(root, text="File length: (empty) (s)")
@@ -91,7 +101,7 @@ input_entry_end.pack(side=tk.LEFT, padx=5)
 
 # Tickbox (checkbox)
 checkbox_var_length = tk.BooleanVar()
-checkbox_length = tk.Checkbutton(input_frame, text="Whole File", variable=checkbox_var_length)
+checkbox_length = tk.Checkbutton(input_frame, text="Whole File", variable=checkbox_var_length, font=(button_size))
 checkbox_length.pack(side=tk.LEFT, padx=5)
 
 # Frame to hold the entry fields and tickbox in a row
@@ -99,7 +109,7 @@ input_frame_2 = tk.Frame(root)
 input_frame_2.pack(pady=1)
 
 # plotting dropbdown
-dropdown_label = tk.Label(input_frame_2, text="Select a plot option:")
+dropdown_label = tk.Label(input_frame_2, text="Select a plot option:", font=(font_size))
 dropdown_label.pack(pady=5)
 
 # Input for user to enter a number
@@ -109,6 +119,7 @@ dropdown_var_plot.set("Q(i+1) and Q(i)")  # Set default option
 options = ["Q(i+1) and Q(i)", "T(i+1) and T(i)", "T(i) and Q(i)", "Q(i)/T(i) and T(i)","Timescale","Q Density","T Density"]  # List of options
 dropdown_menu_plot = tk.OptionMenu(input_frame_2, dropdown_var_plot, *options)
 dropdown_menu_plot.pack(side=tk.LEFT, pady=1)
+dropdown_menu_plot.config(font=button_size) # set the button font
 
 # Input for user to enter a number
 dropdown_var_value_sign = tk.StringVar(root)
@@ -117,6 +128,8 @@ dropdown_var_value_sign.set("Both")  # Set default option
 options_2 = ["Positive", "Negative", "Both"]  # List of options
 dropdown_menu_value_sign = tk.OptionMenu(input_frame_2, dropdown_var_value_sign, *options_2)
 dropdown_menu_value_sign.pack(side=tk.LEFT, pady=1)
+dropdown_menu_value_sign.config(font=button_size) # set the button font
+
 
 # plotting dropbdown
 dropdown_label_grid_size = tk.Label(root, text="Select a grid size:")
@@ -129,18 +142,21 @@ dropdown_var_grid_size.set("100")  # Set default option
 options_grid = ["25", "100"]  # List of options
 dropdown_menu_grid_size = tk.OptionMenu(root, dropdown_var_grid_size, *options_grid)
 dropdown_menu_grid_size.pack(pady=1)
+dropdown_menu_grid_size.config(font=button_size) # set the button font
+
 
 # Frame to hold the entry fields and tickbox in a row
 input_frame_2 = tk.Frame(root)
 input_frame_2.pack(pady=10)
 
 # Button to run plotting
-plot_button = tk.Button(input_frame_2, text="Create Plots", command=run_plotting)
+plot_button = tk.Button(input_frame_2, text="Create Plots", command=run_plotting, font=(button_size))
 plot_button.pack(side=tk.LEFT,padx=5)
 
 checkbox_var_save = tk.BooleanVar()
-checkbox_save = tk.Checkbutton(input_frame_2,text="Save Array", variable=checkbox_var_save)
+checkbox_save = tk.Checkbutton(input_frame_2,text="Save Array", variable=checkbox_var_save,font=(button_size))
 checkbox_save.pack(side=tk.LEFT,padx=5)
 
+[wid.config(font=(None,font_size)) for wid in root.winfo_children() if isinstance(wid, Label) ]
 # Run the GUI loop
 root.mainloop()
