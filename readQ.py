@@ -75,11 +75,11 @@ def setup_csvfile(sourcefile,command):
         seconds = re.sub(r'\.\.+', '.', str(first_split[2]))
         Time[counter] = float(second_split[1])*3600 + float(first_split[1])*60 + float(seconds)
         counter=counter+1
-
+    Time = Time - Time[0]
     # Convert to arrays
     return [Time,Data,count]
 
-def nodi_plot(Time,Data,Count,Plot_command, grid_size):
+def nodi_plot(Time,Data,Count,Plot_command, grid_size, xscale, yscale):
     #responsible for the creation of the nodi* plots
     # sets up the matrix for the magnitude calculation
     magnitude_i = np.zeros(Count)
@@ -91,6 +91,7 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size):
     counter = 1
     counter2 = 0
     # performs the calculation for each PD pulse
+    print(str(np.average(Data)) + " " + str(np.average(Time)))
 
     while(counter < (Count-1)):
         # magnitude
@@ -121,28 +122,56 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size):
         word = 'Magnitude'
         xlabel = r'$\Delta q_{{i}} \, \text{[pC]}$'
         ylabel = r'$\Delta q_{{i+1}} \, \text{[pC]}$'
-        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count)
+        if xscale != "" and yscale != "":
+            if int(xscale) > 0 and int(yscale) > 0:
+                x_bins = np.linspace(-int(xscale), int(xscale), grid_size)
+                y_bins = np.linspace(-int(yscale), int(yscale), grid_size)
+        else:
+            x_bins = np.linspace(min(x), max(x), grid_size)
+            y_bins = np.linspace(min(y), max(y), grid_size)
+        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count, x_bins, y_bins)
     elif Plot_command == 'T(i+1) and T(i)':
         x = time_i
         y = time_i_1
         word = 'Time'
         xlabel = r'$\Delta t_{{i}} \, \text{[s]}$'
         ylabel = r'$\Delta t_{{i+1}} \, \text{[s]}$'
-        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count)
+        if xscale != "" and yscale != "":
+            if float(xscale) > 0 and float(yscale) > 0:
+                x_bins = np.linspace(0, float(xscale), grid_size)
+                y_bins = np.linspace(0, float(yscale), grid_size)
+        else:
+            x_bins = np.linspace(min(x), max(x), grid_size)
+            y_bins = np.linspace(min(y), max(y), grid_size)
+        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count, x_bins, y_bins)
     elif Plot_command == 'T(i) and Q(i)':
         x = magnitude_i/(10**-12)
         y = time_i
         word = 'Time and Magnitude'
         xlabel = r'$\Delta q_{{i}} \, \text{[pC]}$'
         ylabel = r'$\Delta t_{{i}} \, \text{[s]}$'
-        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count)
+        if xscale != "" and yscale != "":
+            if int(xscale) > 0 and int(yscale) > 0:
+                x_bins = np.linspace(-int(xscale), int(xscale), grid_size)
+                y_bins = np.linspace(-int(yscale), int(yscale), grid_size)
+        else:
+            x_bins = np.linspace(min(x), max(x), grid_size)
+            y_bins = np.linspace(min(y), max(y), grid_size)
+        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count, x_bins, y_bins)
     elif Plot_command == 'Q(i)/T(i) and T(i)':
         x = time_i
         y = (magnitude_i / time_i)/(10**-12)
         word = 'Magnitude and Time'
         xlabel = r'$\Delta t_{{i}} \, \text{[s]}$'
         ylabel = r'$\Delta q_{{i}}/ \Delta t_{{i}} \, \text{[pC/s]}$'
-        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count)
+        if xscale != "" and yscale != "":
+            if int(xscale) > 0 and int(yscale) > 0:
+                x_bins = np.linspace(-int(xscale), int(xscale), grid_size)
+                y_bins = np.linspace(-int(yscale), int(yscale), grid_size)
+        else:
+            x_bins = np.linspace(min(x), max(x), grid_size)
+            y_bins = np.linspace(min(y), max(y), grid_size)
+        nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count, x_bins, y_bins)
     elif Plot_command == 'Timescale':
         x = Time
         y = Data/(10**-12)
@@ -166,10 +195,7 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size):
         msg = print('Command is wrong!')
         return 0
     
-def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
-    # Create a 100x100 grid of equally spaced containers
-    x_bins = np.linspace(min(x), max(x), grid_size)
-    y_bins = np.linspace(min(y), max(y), grid_size)
+def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count, x_bins, y_bins):
 
     # 2D histogram to count the number of points in each bin
     H, xedges, yedges = np.histogram2d(x, y, bins=[x_bins, y_bins])
@@ -186,9 +212,14 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
     titlesize = 40
     labelsize = 40
     ticksize = 40
+    norm = LogNorm(vmin=1e-6, vmax=1e-2)  # Adjust vmin and vmax as needed
+
+    # Create a square figure
+    fig, ax = plt.subplots(figsize=(12, 8))  # Adjust the size as needed
+    ax.set_aspect('equal')  # Ensure a square aspect ratio for the axes
 
     # Plot the log-scaled density as a heatmap
-    plt.imshow(H_scaled.T, origin='lower', aspect='auto', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],cmap='viridis',norm=LogNorm())
+    plt.imshow(H_scaled.T, origin='lower', aspect='auto', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]],cmap='viridis',norm=norm)
     ax = plt.gca()
 
     # Set the y-axis to use exponential notation
@@ -204,7 +235,7 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
 
     # Add a colorbar with logarithmic scale
     cbar = plt.colorbar()
-    cbar.set_label('Mean Stack Count Per Minute', size = labelsize)
+    cbar.set_label('Mean Stack Count Per Minute', size = 36)
     cbar.ax.tick_params(labelsize=ticksize)
 
     #cbar.set_label('Normalized Values')
@@ -214,9 +245,10 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
     plt.ylabel(ylabel, size = labelsize)
     file_length = np.round((max(Time) - min(Time)),2)
     plt.title('PD Count: ' + str(Count) + ' Length: ' + str(file_length) + ' s', size = titlesize)
-    mng = plt.get_current_fig_manager()
-    mng.window.state('zoomed')
-    plt.subplots_adjust(left=0.125, bottom=0.125, right=0.988, top=0.86, wspace=None, hspace=None)
+    #mng = plt.get_current_fig_manager()
+    #mng.window.state('zoomed')
+    plt.subplots_adjust(left=0.14, bottom=0.178, right=0.918, top=0.854, wspace=0.2, hspace=0.2)
+    plt.tight_layout()
     plt.show()
 
     # Create 3D plot
@@ -266,11 +298,13 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count):
 
 def time_scale_plot(x,y,word,xlabel,ylabel):
     # plotting the timescale
-    titlesize = 40
-    labelsize = 40
-    ticksize = 40
+    titlesize = 30
+    labelsize = 30
+    ticksize = 30
     x = x - min(x)
-    plt.title(word,size = titlesize)
+
+    plt.subplots(figsize=(12, 8))  # Adjust the size as needed
+    plt.title(word, size = titlesize)
     plt.xlabel(xlabel, size = labelsize)
     plt.ylabel(ylabel, size = labelsize)    
     plt.plot(x, y, marker='o', linestyle='-', color='b', linewidth=1, markersize=2)
@@ -282,8 +316,9 @@ def time_scale_plot(x,y,word,xlabel,ylabel):
     plt.tick_params(axis='both', which='major', labelsize=ticksize)
     plt.subplots_adjust(left=0.12, bottom=0.12, right=0.98, top=0.94, wspace=None, hspace=None)
 
-    mng = plt.get_current_fig_manager()
-    mng.window.state('zoomed')
+    #mng = plt.get_current_fig_manager()
+    #mng.window.state('zoomed')
+    plt.tight_layout()
     plt.show()
     
     return [x, y]
@@ -302,7 +337,9 @@ def plot_density_distribution(data,word,xlabel,ylabel):
     titlesize = 40
     labelsize = 40
     ticksize = 40
+
     # Create a density plot for time differences
+    plt.subplots(figsize=(12, 8))  # Adjust the size as needed
     plt.hist(diffs, bins=1000, density=False, color='skyblue', edgecolor='black')
     plt.yscale('log')
     plt.title(word, size=titlesize)
@@ -312,13 +349,15 @@ def plot_density_distribution(data,word,xlabel,ylabel):
     plt.tick_params(axis='both', which='major', labelsize=ticksize)
     plt.subplots_adjust(left=0.08, bottom=0.08, right=0.98, top=0.95, wspace=None, hspace=None)
 
-    mng = plt.get_current_fig_manager()
-    mng.window.state('zoomed')
+    #mng = plt.get_current_fig_manager()
+    #mng.window.state('zoomed')
+    plt.tight_layout()
     plt.show()
 
     zero_indices_diffs = np.where(diffs < 0)
     diffs = np.delete(diffs, zero_indices_diffs)
 
+    plt.subplots(figsize=(12, 8))  # Adjust the size as needed
     plt.hist(diffs, bins=1000, density=False, color='skyblue', edgecolor='black')
     plt.yscale('log')
     plt.title(word, size=titlesize)
@@ -328,8 +367,9 @@ def plot_density_distribution(data,word,xlabel,ylabel):
     plt.tick_params(axis='both', which='major', labelsize=ticksize)
     plt.subplots_adjust(left=0.08, bottom=0.08, right=0.98, top=0.95, wspace=None, hspace=None)
 
-    mng = plt.get_current_fig_manager()
-    mng.window.state('zoomed')
+    #mng = plt.get_current_fig_manager()
+    #mng.window.state('zoomed')
+    plt.tight_layout()
     plt.show()
 
     return diffs
