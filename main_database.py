@@ -62,7 +62,7 @@ def run_plotting():
 
 # Create the main window
 root = tk.Tk()
-root.title("NoDi* Plotter")
+root.title("PSA Plotter")
 font_size = 16
 button_size = tkFont.Font(family='Helvetica', size=12)
 
@@ -134,7 +134,7 @@ dropdown_menu_grid_size.config(font=button_size) # set the button font
 input_frame_5 = tk.Frame(root)
 input_frame_5.pack(pady=1)
 
-scale_factor_label = tk.Label(input_frame_5, text="Enter X and Y scale (pC)", font=(font_size))
+scale_factor_label = tk.Label(input_frame_5, text="Enter X and Y scale", font=(font_size))
 scale_factor_label.pack(side=tk.LEFT, padx=5)
 
 input_entry_xscale = tk.Entry(input_frame_5, width=15)

@@ -91,8 +91,6 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size, xscale, yscale):
     counter = 1
     counter2 = 0
     # performs the calculation for each PD pulse
-    print(str(np.average(Data)) + " " + str(np.average(Time)))
-
     while(counter < (Count-1)):
         # magnitude
         magnitude_i[counter2] = Data[counter] - Data[counter-1]
@@ -102,6 +100,7 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size, xscale, yscale):
         time_i_1[counter2] = Time[counter+1] - Time[counter]        
         counter = counter + 1
         counter2 = counter2 + 1
+    print(str(np.average(Data)) + " " + str(np.min(Data)) + " " + str(np.average(time_i)))
 
     # clean the lists
     zero_indices_time = np.where(time_i <= 0)
@@ -175,7 +174,7 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size, xscale, yscale):
     elif Plot_command == 'Timescale':
         x = Time
         y = Data/(10**-12)
-        word = 'PD Magnitude vs. Time (PD Count: ' + str(Count) + ')'
+        word = 'Timescale (PD Count: ' + str(Count) + ')'
         xlabel = 'Time [s]'
         ylabel = 'Magnitude [pC]'
         time_scale_plot(x,y,word,xlabel,ylabel)
@@ -183,13 +182,13 @@ def nodi_plot(Time,Data,Count,Plot_command, grid_size, xscale, yscale):
         x = Data/(10**-12)
         xlabel = 'Magnitude Differences [pC]'
         ylabel = 'Count'
-        word = 'Log Scaled Density Function of Magnitude Differences'
+        word = 'Density Function of Magnitude Differences'
         plot_density_distribution(x,word,xlabel,ylabel)
     elif Plot_command == 'T Density':
         x = Time
         xlabel = 'Time Differences [s]'
         ylabel = 'Count'
-        word = 'Log Scaled Density Function of Time Differences'
+        word = 'Density Function of Time Differences'
         plot_density_distribution(x,word,xlabel,ylabel)
     else:
         msg = print('Command is wrong!')
@@ -298,9 +297,9 @@ def nodi_plot_2D_3D(x,y,word,xlabel,ylabel,grid_size,Time,Count, x_bins, y_bins)
 
 def time_scale_plot(x,y,word,xlabel,ylabel):
     # plotting the timescale
-    titlesize = 30
-    labelsize = 30
-    ticksize = 30
+    titlesize = 40
+    labelsize = 40
+    ticksize = 40
     x = x - min(x)
 
     plt.subplots(figsize=(12, 8))  # Adjust the size as needed
